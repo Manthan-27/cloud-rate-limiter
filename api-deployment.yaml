@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-rate-limiter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloud-rate-limiter
+  template:
+    metadata:
+      labels:
+        app: cloud-rate-limiter
+    spec:
+      containers:
+      - name: cloud-rate-limiter
+        image: cloud-rate-limiter
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: app-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloud-rate-limiter-service
+spec:
+  selector:
+    app: cloud-rate-limiter
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: NodePort

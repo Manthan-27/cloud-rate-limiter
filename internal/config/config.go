@@ -13,28 +13,21 @@ type Config struct {
 	RedisHost    string
 	RedisPort    string
 	RateLimit    int
-	RateDuration int // in seconds
+	RateDuration int // seconds
 
-	Strategy     string
-	Burst        int
-	Refillpersec int
+	// NEW
+	Strategy     string // fixed | sliding | token_bucket
+	Burst        int    // token bucket only
+	Refillpersec int    // token bucket only
 }
 
 func LoadConfig() *Config {
-	// load .env file if exists
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("No .env file found, using system environment variables")
-	}
+	_ = godotenv.Load()
 
-	rateLimit, err := strconv.Atoi(getEnv("RATE_LIMIT", "5"))
-	if err != nil {
-		log.Fatalf("Invalid RATE_LIMIT: %v", err)
-	}
-	rateDuration, err := strconv.Atoi(getEnv("RATE_DURATION", "60"))
-	if err != nil {
-		log.Fatalf("Invalid RATE_DURATION: %v", err)
-	}
+	rateLimit := atoi(getEnv("RATE_LIMIT", "10"))
+	rateDuration := atoi(getEnv("RATE_DURATION", "60"))
+	burst := atoi(getEnv("BURST", "10"))
+	refillPerSec := atoi(getEnv("REFILL_PER_SEC", "5"))
 
 	return &Config{
 		ServerPort:   getEnv("SERVER_PORT", "8080"),
@@ -42,13 +35,24 @@ func LoadConfig() *Config {
 		RedisPort:    getEnv("REDIS_PORT", "6379"),
 		RateLimit:    rateLimit,
 		RateDuration: rateDuration,
+
+		Strategy:     getEnv("RATE_LIMIT_STRATEGY", "fixed"),
+		Burst:        burst,
+		Refillpersec: refillPerSec,
 	}
 }
 
-// helper to read env variable or fallback default
-func getEnv(key, defaultVal string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+func getEnv(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
 	}
-	return defaultVal
+	return def
+}
+
+func atoi(s string) int {
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		log.Fatalf("invalid int for config: %s", s)
+	}
+	return v
 }

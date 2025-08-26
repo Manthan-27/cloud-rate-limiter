@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  SERVER_PORT: "8080"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  RATE_LIMIT: "5"
+  RATE_DURATION: "60"
+  RATE_LIMIT_STRATEGY: "sliding"
+  BURST: "10"
